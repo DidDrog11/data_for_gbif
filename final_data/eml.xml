@@ -1,119 +1,91 @@
-<?xml version="1.0"?>
-<eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.1" xmlns:dc="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.1 http://rs.gbif.org/schema/eml-gbif-profile/1.1/eml.xsd" packageId="22p01224-12z5-12d4-91r2-32cp1a81f14g/eml-v1.0.xml" xml:lang="eng">
-	<dataset>
-		<title xml:lang="eng">Data from: Rodent trapping studies as an overlooked information source for understanding endemic and novel zoonotic spillover</title>
-		<creator>
-			<individualName>
-				<givenName>David</givenName>
-				<surName>Simons</surName>
-			</individualName>
-			<organizationName>The Royal Veterinary College, London, United Kingdom</organizationName>
-			<positionName>PhD candidate</positionName>
-			<userId directory="http://orcid.org/">0000-0001-9655-1656</userId>
-		</creator>
-		<metadataProvider>
-			<individualName>
-				<givenName>David</givenName>
-				<surName>Simons</surName>
-			</individualName>
-			<organizationName>The Royal Veterinary College, London, United Kingdom</organizationName>
-			<positionName>PhD candidate</positionName>
-			<electronicMailAddress>dsimons19@rvc.ac.uk</electronicMailAddress>
-			<userId directory="http://orcid.org/">0000-0001-9655-1656</userId>
-		</metadataProvider>
-		<associatedParty>
-			<individualName>
-				<givenName>Lauren A</givenName>
-				<surName>Attfield</surName>
-			</individualName>
-			<organizationName>Imperial College London, London, United Kingdom</organizationName>
-			<positionName>Post-doctoral researcher</positionName>
-			<role>processor</role>
-		</associatedParty>
-		<pubDate> 2023-02 </pubDate>
-		<language>eng</language>
-		<abstract>
-			<para> This dataset contains records of the small-mammals, primarily Rodentia, trapped across West Africa and included in published literature that was obtained through a comprehensive review of rodent trapping studies across the region. Data were extracted from studies to produce detection, non-detection histories at described trapping locations. Geolocation were perfored on all included locations. Individual species that were detected elsewhere in the contributing studies records but were not reported from a trapping location were interepreted as non-detections and so explicitly recorded as 0 counts.</para>
-		</abstract>
-		<keywordSet>
-			<keyword>Occurrence</keyword>
-			<keywordThesaurus>GBIF Dataset Type Vocabulary: http://rs.gbif.org/vocabulary/gbif/dataset_type.xml</keywordThesaurus>
-		</keywordSet>
-		<intellectualRights>
-			<para>
-This work is licensed under a
-<ulink url="http://creativecommons.org/licenses/by/4.0/legalcode"><citetitle>Creative Commons Attribution (CC-BY) 4.0 License</citetitle></ulink>
-.
-</para>
-		</intellectualRights>
-		<project>
-			<title>Reef Life Survey</title>
-			<personnel>
-				<individualName>
-					<givenName>Graham J.</givenName>
-					<surName>Edgar</surName>
-				</individualName>
-				<role>principalInvestigator</role>
-			</personnel>
-			<personnel>
-				<individualName>
-					<givenName>Rick D</givenName>
-					<surName>Stuart-Smith</surName>
-				</individualName>
-				<role>principalInvestigator</role>
-			</personnel>
-			<abstract>
-				<para>Reef Life Survey (RLS) aims to improve biodiversity conservation and the sustainable management of marine resources by coordinating surveys of rocky and coral reefs using scientific methods. RLS activities depend on the skills of experienced and motivated recreational SCUBA divers and partnerships with management agencies and university researchers.</para>
-			</abstract>
-			<funding>
-				<para>RLS activities are presently funded primarily through grants from biodiversity management agencies and philanthropic organisations, and with in-kind contributions and support from SCUBA charter operators and shops. Further funding sources and sustainable funding models are being sought to allow long-term continuation of RLS data collection at larger scales.</para>
-			</funding>
-			<studyAreaDescription>
-				<descriptor name="generic" citableClassificationSystem="false">
-					<descriptorValue>RLS surveys have been undertaken on shallow rocky and coral reefs in all ocean basins and from the Arctic to the Antarctic.</descriptorValue>
-				</descriptor>
-			</studyAreaDescription>
-			<designDescription>
-				<description>
-					<para>As of December 2015, the majority of global data represent once-off surveys designed to fill spatial gaps and provide an extensive coverage of reefs around the world. Time-series data from repeat surveys of particular reef sites as part of a monitoring program has largely been confined to some key locations in Australia. A key goal of RLS is to extend to number of locations at which time-series data are collected, undertaking monitoring in many more countries.</para>
-				</description>
-			</designDescription>
-		</project>
-	</dataset>
-	<style id="autoconsent-prehide"/>
-	<additionalMetadata>
-		<metadata>
-			<gbif>
-				<dateStamp>2014-06-25T11:18:37.647+00:00</dateStamp>
-				<hierarchyLevel>dataset</hierarchyLevel>
-				<citation identifier="http://doi.org/10.15468/qjgwba">Edgar G J, Stuart-Smith R D (2014): Reef Life Survey: Global reef fish dataset. v2.0. Reef Life Survey. Dataset/Samplingevent. http://doi.org/10.15468/qjgwba</citation>
-				<bibliography>
-					<citation identifier="doi:10.1038/sdata.2014.7">Edgar, GJ and Stuart-Smith, RD, &#x201C;Systematic global assessment of reef fish communities by the Reef Life Survey program&#x201D;, Scientific Data, 1 Article 140007. doi:10.1038/sdata.2014.7 ISSN 2052-4463 (2014)</citation>
-					<citation identifier="doi:10.1038/nature13022">Edgar, GJ and Stuart-Smith, RD and Willis, TJ* and Kininmonth, S* and Baker, SC and Banks, S* and Barrett, NS and Becerro, MA* and Bernard, ATF* and Berkhout, J and Buxton, CD and Campbell, SJ* and Cooper, AT and Davey, M and Edgar, SC* and Forsterra, G* and Galvan, DE* and Irigoyen, AJ* and Kushner, DJ* and Moura, R* and Parnell, PE* and Shears, NT* and Soler, G and Strain, EMA* and Thomson, RJ, &#x201C;Global conservation outcomes depend on marine protected areas with five key features&#x201D;, Nature, 506 (7487) pp. 216-220. doi:10.1038/nature13022 ISSN 0028-0836 (2014)</citation>
-					<citation identifier="doi:10.1016/j.biocon.2013.07.037">Bird, TJ and Bates, AE and Lefcheck, JS* and Hill, NA and Thomson, RJ and Edgar, GJ and Stuart-Smith, RD and Wotherspoon, S and Krkosek, M* and Stuart-Smith, JF and Pecl, GT and Barrett, N and Frusher, S, &#x201C;Statistical solutions for error and bias in global citizen science datasets&#x201D;, Biological Conservation, 173 pp. 144-154. doi:10.1016/j.biocon.2013.07.037 ISSN 0006-3207 (2014)</citation>
-					<citation identifier="doi:10.1038/nature12529">Stuart-Smith, RD and Bates, AE and Lefcheck, JS* and Duffy, JE* and Baker, SC and Thomson, RJ and Stuart-Smith, JF and Hill, NA and Kininmonth, SJ* and Airoldi, L* and Becerro, MA* and Campbell, SJ* and Dawson, TP* and Navarrete, SA* and Soler, GA and Strain, EMA* and Willis, TJ* and Edgar, GJ, &#x201C;Integrating abundance and functional traits reveals new global hotspots of fish diversity&#x201D;, Nature, 501 pp. 539-542. doi:10.1038/nature12529 ISSN 0028-0836 (2013)</citation>
-					<citation identifier="ISSN 1051-0761">Edgar, GJ and Barrett, NS and Stuart-Smith, RD, &#x2018;Exploited reefs protected from fishing transform over decades into conservation features otherwise absent from seascapes&#x2019;, Ecological Applications, 19 (8) pp. 1967-1974. ISSN 1051-0761 (2009)</citation>
-					<citation identifier="ISSN 0171-8630">Edgar, GJ and Stuart-Smith, RD, &#x2018;Ecological effects of marine protected areas on rocky reef communities - a continental-scale analysis&#x2019;, Marine Ecology Progress Series, 388 pp. 51-62. ISSN 0171-8630 (2009)</citation>
-					<citation identifier="doi:10.1038/nature16144">Stuart-Smith, RD and Edgar, GJ and Barrett, NS and Kininmonth, S and Bates AE, 'Thermal biases and vulnerability to warming in the world&#x2019;s marine fauna', Nature, 528, pp. 88-92. doi:10.1038/nature16144 (2015)</citation>
-				</bibliography>
-				<physical>
-					<objectName>Figshare archive of original data published on 2014-05-22 </objectName>
-					<characterEncoding>Mac OS Roman</characterEncoding>
-					<dataFormat>
-						<externallyDefinedFormat>
-							<formatName>CSV</formatName>
-						</externallyDefinedFormat>
-					</dataFormat>
-					<distribution>
-						<online>
-							<url function="download">http://dx.doi.org/10.6084/m9.figshare.934319</url>
-						</online>
-					</distribution>
-				</physical>
-				<resourceLogoUrl>http://ipt.ala.org.au/logo.do?r=global</resourceLogoUrl>
-				<formationPeriod>2006 onwards</formationPeriod>
-				<dc:replaces>38f06820-08c5-42b2-94f6-47cc3e83a54a/v2.xml</dc:replaces>
-			</gbif>
-		</metadata>
-	</additionalMetadata>
+<?xml version="1.0" encoding="UTF-8"?>
+<eml:eml xmlns:eml="https://eml.ecoinformatics.org/eml-2.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.2" packageId="22p01224-12z5-12d4-91r2-32cp1a81f14g/eml-v1.0.xml" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.1 http://rs.gbif.org/schema/eml-gbif-profile/1.1/eml.xsd" scope="system" system="http://gbif.org">
+  <dataset>
+    <title>Data from: Rodent trapping studies as an overlooked information source for understanding endemic and novel zoonotic spillover</title>
+    <creator>
+      <individualName>
+        <givenName>David</givenName>
+        <surName>Simons</surName>
+      </individualName>
+      <organizationName>The Royal Veterinary College, London, United Kingdom</organizationName>
+      <electronicMailAddress>dsimons19@rvc.ac.uk</electronicMailAddress>
+    </creator>
+    <creator>
+      <individualName>
+        <givenName>Lauren A</givenName>
+        <surName>Attfield</surName>
+      </individualName>
+      <organizationName>Imperial College London, London, United Kingdom</organizationName>
+    </creator>
+    <creator>
+      <individualName>
+        <givenName>Kate E</givenName>
+        <surName>Jones</surName>
+      </individualName>
+      <organizationName>University College London, London, United Kingdom</organizationName>
+    </creator>
+    <creator>
+      <individualName>
+        <givenName>Deborah</givenName>
+        <surName>Watson-Jones</surName>
+      </individualName>
+      <organizationName>London School of Hygiene and Tropical Medicine, London, United Kingdom</organizationName>
+    </creator>
+    <creator>
+      <individualName>
+        <givenName>Deborah</givenName>
+        <surName>Watson-Jones</surName>
+      </individualName>
+      <organizationName>The Royal Veterinary College, London, United Kingdom</organizationName>
+    </creator>
+    <pubDate>2023</pubDate>
+    <abstract>This dataset contains records of the small-mammals, primarily Rodentia, trapped across West Africa and included in published literature that was obtained through a comprehensive review of rodent trapping studies across the region. Data were extracted from studies to produce detection, non-detection histories at described trapping locations. Geolocation were perfored on all included locations. Individual species that were detected elsewhere in the contributing studies records but were not reported from a trapping location were interepreted as non-detections and so explicitly recorded as 0 counts.</abstract>
+    <keywordSet>
+      <keyword>Occurrence</keyword>
+      <keywordThesaurus>GBIF Dataset Type Vocabulary</keywordThesaurus>
+    </keywordSet>
+    <intellectualRights>This work is licensed under a CC0 1.0 Universal (CC0 1.0) Public Domain Dedication</intellectualRights>
+    <coverage>
+      <geographicCoverage>
+        <geographicDescription>This dataset covers at least 1,661 sampling sites, from 14 West African countries.</geographicDescription>
+        <boundingCoordinates>
+          <westBoundingCoordinate>-23.67</westBoundingCoordinate>
+          <eastBoundingCoordinate>21.84</eastBoundingCoordinate>
+          <northBoundingCoordinate>23.9</northBoundingCoordinate>
+          <southBoundingCoordinate>21.83</southBoundingCoordinate>
+        </boundingCoordinates>
+      </geographicCoverage>
+      <taxonomicCoverage>
+        <generalTaxonomicCoverage>This dataset contains occurrence records of species from four orders of Chordata, namel Afrosoicida, Erinaceomorpha, Rodentia and Soricomorpha</generalTaxonomicCoverage>
+        <taxonomicClassification>
+          <taxonRankName>phylum</taxonRankName>
+          <taxonRankValue>Chordata</taxonRankValue>
+        </taxonomicClassification>
+      </taxonomicCoverage>
+    </coverage>
+    <contact>
+      <individualName>
+        <givenName>David</givenName>
+        <surName>Simons</surName>
+      </individualName>
+      <organizationName>The Royal Veterinary College, London, United Kingdom</organizationName>
+      <electronicMailAddress>dsimons19@rvc.ac.uk</electronicMailAddress>
+    </contact>
+    <project>
+      <title>Data from: Rodent trapping studies as an overlooked information source for understanding endemic and novel zoonotic spillover</title>
+      <personnel>
+        <individualName>
+          <givenName>David</givenName>
+          <surName>Simons</surName>
+        </individualName>
+        <role>PrincipalInvestigator</role>
+      </personnel>
+      <funding>Data collection and analysis were funded through a a PhD award from the UK Biotechnology and Biological Sciences Research Council [BB/M009513/1].</funding>
+      <studyAreaDescription>
+        <descriptor citableClassificationSystem="false" name="generic">
+          <descriptorValue>Data were extracted from studies reporting rodent trapping in the West African region. The United Nations defined 16 countries within this region, including,  Benin, Burkina Faso, Cape Verde, The Gambia, Ghana, Guinea, Guinea-Bissau, Ivory Coast, Liberia, Mali, Mauritania, Niger, Nigeria, Senegal, Sierra Leone, and Togo, as well as Saint Helena, Ascension and Tristan da Cunha (United Kingdom Overseas Territory).</descriptorValue>
+        </descriptor>
+      </studyAreaDescription>
+    </project>
+  </dataset>
 </eml:eml>

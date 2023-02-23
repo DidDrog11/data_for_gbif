@@ -1,0 +1,41 @@
+\documentclass[a4paper,num-refs,gigabyte]{oup-contemporary}
+\journal{gigabyte}
+\usepackage{graphicx}
+\usepackage{siunitx}
+
+\title{Data from: Rodent trapping studies as an overlooked information source for understanding endemic and novel zoonotic spillover}
+
+\author[1,2,3,\authfn{1}]{David Simons}
+\author[3,4]{Lauren A. Attfield}
+\author[3]{Kate E. Jones}
+\author[3,5]{Deborah Watson-Jones}
+\author[1]{Richard Kock}
+
+\affil[1]{First Institution}
+\affil[2]{Second Institution}
+
+\authnote{\authfn{1}abc@uni.edu; alphbeta@lab.edu}
+
+\papercat{Paper}
+
+\runningauthor{First et al.}
+
+\jvolume{00}
+\jnumber{0}
+\jyear{2020}
+
+\begin{document}
+
+\begin{frontmatter}
+\maketitle
+\begin{abstract}
+Rodents are a diverse, globally distributed and ecologically important order of mammals that are known and predicted hosts of zoonotic pathogens. The sampling of rodents and their pathogens are taxonomically and spatially biased, limiting inference of the hazard of spillover of zoonotic pathogens into human populations from these rodent vectors. The distribution and occurrence of rodent hosts are typically derived from consolidated databases (e.g., IUCN, GBIF) which suffer from these biases. Here, we synthesise data from 127 rodent trapping studies, published between 1964–2022 conducted in West Africa to provide an additional source of information that can supplement consolidated databases to characterise the range and occurrence of rodent species. We combine these occurrence data with results from pathogen screening to produce a dataset containing detection/non-detection data for 65,628 individual small mammals identified to species level from at least 1,611 trap sites across 14 countries of West Africa in addition to 32 microorganisms identified to species and genus level that are known or potential pathogens. The produced dataset is expected to mitigate some of the spatial and taxonomic biases in current databases to improve analyses of rodent-borne zoonotic pathogen spillover hazard across West Africa.
+\end{abstract}
+
+\begin{classifications}
+Classification 1; Classifications 2; Classifications 3 (Minimum three key words from the GigaScience/GigaDB Classifications List)
+\end{classifications}
+\end{frontmatter}
+
+
+\end{document}

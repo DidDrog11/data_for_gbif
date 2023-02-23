@@ -1,7 +1,7 @@
 if (!require("pacman")) install.packages("pacman")
 
 pkgs =
-  c("eml",
+  c("EML",
     "here",
     "tidyverse",
     "bib2df",
@@ -12,16 +12,11 @@ pkgs =
     "sf",
     "rosm",
     "lubridate",
-    "taxize"
+    "taxize",
+    "xtable"
     )
 pacman::p_load(pkgs, character.only = T)
 
-# if(!exists("google_api")) {
-# google_api <- rstudioapi::askForSecret("Google API Key")
-# }
-
-if(!exists("ENTREZ_KEY")) {
-  ENTREZ_KEY <- rstudioapi::askForSecret("Entrez API")
+if(!exists("google_api")) {
+google_api <- rstudioapi::askForSecret("Google API Key")
 }
-
-#source(here::here("R", "functions.R"))

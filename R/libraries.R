@@ -16,7 +16,3 @@ pkgs =
     "xtable"
     )
 pacman::p_load(pkgs, character.only = T)
-
-if(!exists("google_api")) {
-google_api <- rstudioapi::askForSecret("Google API Key")
-}

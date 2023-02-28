@@ -94,7 +94,10 @@ rodent_classifications <- rodent_data %>%
   mutate(gbif_id = ifelse(is.na(species_gbif), genus_gbif, species_gbif),
          iso3c = countrycode(as.character(country), "country.name", "iso3c")) %>%
   distinct() %>%
-  drop_na(number)
+  drop_na(number) %>%
+  group_by(unique_id) %>%
+  mutate(path_link = paste0(unique_id, "_", row_number())) %>%
+  ungroup()
 
 
 # Import GBIF template ----------------------------------------------------
@@ -166,7 +169,6 @@ no_gps <- rodent_coords %>%
   mutate(long_dms = as.double(long_dms),
          lat_dms = as.double(lat_dms))
 
-
 # Create coords for lowest level of resolution ----------------------------
 admin <- read_rds(here("data_download", "admin_spatial", "level_2_admin.rds")) %>%
   filter(COUNTRY %in% unique(no_gps$country))
@@ -228,15 +230,96 @@ all_rodent_coords <- rodent_gps %>%
   bind_rows(no_gps_df) %>%
   select(occurrenceID, accuracy, geometry)
 
+# Add pathogen data -------------------------------
+
+# Cleaning species names
+pathogen_data <- read_rds(here("data_raw", "pathogen.rds")) %>%
+  group_by(unique_id) %>%
+  mutate(country = as_factor(country),
+         path_link =  paste0(unique_id, "_", row_number()))
+
+path_all <- pathogen_data %>%
+  dplyr::select(path_link, all_of(pathogen_tested), path_1_tested, path_2_tested, path_3_tested, path_4_tested, path_5_tested, path_6_tested,
+                pcr_path_1_positive, pcr_path_2_positive, pcr_path_3_positive, pcr_path_4_positive, pcr_path_5_positive, pcr_path_6_positive,
+                ab_ag_path_1_positive, ab_ag_path_2_positive, ab_ag_path_3_positive, ab_ag_path_4_positive, ab_ag_path_5_positive,
+                culture_path_1_positive, culture_path_2_positive, culture_path_3_positive, histo_path_1_positive, histo_path_2_positive,
+                histo_path_3_positive, histo_path_4_positive, histo_path_5_positive, histo_path_6_positive)
+
+long_pathogen <- path_all %>%
+  tibble() %>%
+  pivot_longer(cols = c(path_1_tested, path_2_tested, path_3_tested, path_4_tested, path_5_tested, path_6_tested,
+                        pcr_path_1_positive, pcr_path_2_positive, pcr_path_3_positive, pcr_path_4_positive, pcr_path_5_positive, pcr_path_6_positive,
+                        ab_ag_path_1_positive, ab_ag_path_2_positive, ab_ag_path_3_positive, ab_ag_path_4_positive, ab_ag_path_5_positive,
+                        culture_path_1_positive, culture_path_2_positive, culture_path_3_positive, histo_path_1_positive, histo_path_2_positive,
+                        histo_path_3_positive, histo_path_4_positive, histo_path_5_positive, histo_path_6_positive)) %>%
+  drop_na(value) %>%
+  rename("assay" = name,
+         "number" = value) %>%
+  mutate(pathogen_tested = case_when(str_detect(assay, "path_1") ~ path_1,
+                                     str_detect(assay, "path_2") ~ path_2,
+                                     str_detect(assay, "path_3") ~ path_3,
+                                     str_detect(assay, "path_4") ~ path_4,
+                                     str_detect(assay, "path_5") ~ path_5,
+                                     str_detect(assay, "path_6") ~ path_6,
+                                     TRUE ~ "error")) %>%
+  dplyr::select(-all_of(pathogen_tested))
+
+pathogen_dictionary <- as.list(c("leishmania major", "lassa mammarenavirus", "toxoplasma gondii", "usutu virus", "taenia", "escherichia coli",
+                                 "klebsiella pneumoniae", "arenaviridae", "trichuridae", "borrelia", "bartonella", "trypanosomatidae", "arenaviridae",
+                                 "schistosoma", "borrelia crocidurae", "leishmania", "arenaviridae", "arenaviridae", "leptospira", "lassa mammarenavirus",
+                                 "rift valley fever phlebovirus", "phlebovirus", "flavivirus", "hantaviridae", "lassa mammarenavirus", "lassa mammarenavirus",
+                                 "strongyloides", "babesia", "eimeria", "plasmodium", "trypanosoma lewisi", "coxiella burnetii", "bartonella", "borrelia",
+                                 "ehrlichia", "mycoplasma", "orentia", "rickettsia", "mammarenavirus", "orthopoxvirus", "lassa mammarenavirus", "orthopoxvirus",
+                                 "mycobacterium", "borrelia", "schistosoma mansoni", "plagiorchis", "anaplasma", "mycobacterium", "lassa mammarenavirus",
+                                 "lassa mammarenavirus"))
+names(pathogen_dictionary) <- c("leishmania_major", "lassa_mammeranvirus", "toxoplasma_gondii", "usutu_virus", "hydatigera_species", "e_coli_esbl",
+                                "k_pneumoniae_esbl", "arenaviruses", "trichuris_spp", "borrellia_spp", "bartonella_spp", "trypanosoma_spp", "arenaviridae_spp",
+                                "schistosoma_spp", "borrelia_crocidurae", "leishmania_spp", "arenavirus", "arenavirus_spp", "leptospirosis_spp", "lassa_mammarenavirus",
+                                "rift_valley_fever", "phleboviruses", "flavivirus", "hantavirus", "lassa_mammarenavirus_antigen", "lassa_mammarenavirus_antibody",
+                                "strongyloides_spp", "babesia_spp", "eimeria_spp", "plasmodium_spp", "trypanasoma_lewisi", "coxiella_burnetii", "bartonella", "borrelia",
+                                "ehrlichia", "mycoplasma_spp", "orentia", "rickettsia", "mammarenavirus", "orthopoxvirus", "lassa", "orthopoxvirus_spp",
+                                "mycobacterium_spp", "borrelia_spp", "schistosoma_mansoni", "plagiorchis_species", "anaplasma", "mycobacteria_spp", "lassa_mammarenavirus_IgG_Ab",
+                                "lassa_mammarenavirus_Ag")
+
+pathogen_prep <- long_pathogen %>%
+  mutate(pathogen_name = recode(pathogen_tested, !!!pathogen_dictionary),
+         group = case_when(str_detect(assay, "_1_") ~ 1,
+                           str_detect(assay, "_2_") ~ 2,
+                           str_detect(assay, "_3_") ~ 3,
+                           str_detect(assay, "_4_") ~ 4,
+                           str_detect(assay, "_5_") ~ 5,
+                           str_detect(assay, "_6_") ~ 6)) %>%
+  group_by(group) %>%
+  group_split() %>%
+  lapply(., function(x) {
+  x %>%
+    mutate(method = case_when(str_detect(assay, "_positive") ~ str_split(assay, "_", simplify = TRUE)[,1]),
+           method = case_when(str_detect(method, "pcr") ~ "PCR",
+                              str_detect(method, "ab|ag") ~ "Serology",
+                              str_detect(method, "culture") ~ "Culture",
+                              str_detect(method, "hist") ~ "Histology"),
+           assay = case_when(str_detect(assay, "test") ~ "tested",
+                             str_detect(assay, "pos") ~ "positive")) %>%
+    group_by(path_link) %>%
+    fill(method, .direction = "updown") %>%
+    pivot_wider(names_from = assay, values_from = number)
+}) %>%
+  bind_rows() %>%
+  filter(tested != 0) %>%
+  mutate(Organism = pathogen_name,
+         organismRemarks = paste0("Assayed using ", method, ". Number of individuals tested = ", tested, ". Number of individuals positive = ", positive),
+         occurrenceStatus = case_when(positive >= 1 ~ "Present",
+                                      TRUE ~ "Absent")) %>%
+  select(path_link, Organism, organismRemarks, occurrenceStatus)
 
 # Build the GBIF dataframe ------------------------------------------------
-
 
 final_columns <- c("occurrenceID", "basisOfRecord", "scientificName", "eventDate",
                    "countryCode", "taxonRank", "kingdom", "phylum", "order", "family", "genus",
                    "taxonRank", "decimalLatitude", "decimalLongitude",
                    "geodeticDatum", "coordinateUncertaintyInMeters", "individualCount", "dataGeneralizations",
-                   "country", "locality", "verbatimLocality", "identifiedBy", "datasetName", "eventRemarks")
+                   "country", "locality", "verbatimLocality", "identifiedBy", "datasetName", "eventRemarks", "Organism",
+                   "organismRemarks", "occurrenceStatus")
 
 dataGeneralisations <- c("region" = "Centre of smallest associated administrative district used",
                          "regional" = "Centre of smallest associated administrative district used",
@@ -310,6 +393,16 @@ prep_df <- rodent_classifications %>%
                            TRUE ~ order),
          phylum = "chordata",
          kingdom = "animalia")
+
+# Add pathogen_prep to prep_df
+a <- prep_df %>%
+  left_join(pathogen_prep, by = c("path_link")) %>%
+  select(any_of(final_columns))
+
+
+test <- sample_n(a %>%
+                   drop_na(occurrenceStatus), 100)
+write_tsv(test, here("final_data", "taxa_path.txt"))
 
 final_df <- prep_df %>%
   select(any_of(final_columns))

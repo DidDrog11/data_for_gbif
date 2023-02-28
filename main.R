@@ -23,5 +23,8 @@ dir.create("data_clean")
 source(here("R", "2_1_cleaning.R"))
 
 source(here("R", "2_2_clean_species.R"))
-source(here("R", "2_3_clean_habitat.R"))
+
+# Produce the metadata file
+source(here("R", "3_create_metadata.R"))
+
 source(here("R", "2_4_clean_pathogen.R"))

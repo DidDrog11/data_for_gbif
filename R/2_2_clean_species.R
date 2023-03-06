@@ -5,8 +5,7 @@ rodent_data <- read_rds(here("data_raw", "rodent_data.rds")) %>%
          record_id = 1:nrow(.))
 
 study_titles = read_rds(here("data_clean", "studies.rds")) %>%
-  select(unique_id, first_author, title, reference_uid) %>%
-  mutate(title = paste0("Data from: ", title, " DOI/ISSN: ", reference_uid))
+  select(unique_id, first_author, title, reference_uid)
 
 # Cleaning species names --------------------------------------------------
 
@@ -80,12 +79,13 @@ if(!file.exists(here("data_clean", "species_gbif.rds"))){
 
 genus <- read_rds(here("data_clean", "genus_gbif.rds"))
 genus_hierarchy <- read_rds(here("data_clean", "genus_hierarchy.rds")) %>%
-  mutate(across(.cols = everything(), .fns = str_to_lower))
+  mutate(across(.cols = everything(), .fns = str_to_sentence))
 species <- read_rds(here("data_clean", "species_gbif.rds")) %>%
   drop_na(gbif_id)
 
 # Add GBIF ID for species and genus identification to the raw data
 rodent_classifications <- rodent_data %>%
+  mutate(genus = str_to_sentence(genus)) %>%
   full_join(., genus %>%
               rename("genus_gbif" = gbif_id), by = "genus") %>%
   full_join(., genus_hierarchy, by = "genus") %>%
@@ -230,6 +230,90 @@ all_rodent_coords <- rodent_gps %>%
   bind_rows(no_gps_df) %>%
   select(occurrenceID, accuracy, geometry)
 
+
+final_columns <- c("occurrenceID", "associatedOccurrences", "associatedTaxa", "pathway", "basisOfRecord", "scientificName", "eventDate",
+                   "countryCode", "taxonRank", "kingdom", "phylum", "class", "order", "family", "genus", "specificEpithet", "decimalLatitude", "decimalLongitude",
+                   "geodeticDatum", "coordinateUncertaintyInMeters", "occurrenceStatus", "individualCount", "organismQuantity", "organismQuantityType",
+                   "occurrenceRemarks", "dataGeneralizations", "country", "locality", "verbatimLocality", "identificationRemarks", "identifiedBy",
+                   "datasetName", "bibliographicCitation", "rightsHolder", "license", "eventRemarks")
+
+dataGeneralisations <- c("region" = "Centre of smallest associated administrative district used",
+                         "regional" = "Centre of smallest associated administrative district used",
+                         "Niakhar" = "Centre of smallest associated administrative district used",
+                         "country" = "Centroid of the country used as no finer scale geographic information available",
+                         "site" = "Coordinates reflect the location of the study site where the sample was collected")
+
+prep_df <- rodent_classifications %>%
+  bind_cols(as_tibble(matrix(nrow = nrow(rodent_classifications), ncol = length(gbif_col_names)), .name_repair = ~ gbif_col_names)) %>%
+  relocate(colnames(gbif_template)) %>%
+  mutate(occurrenceID = paste0(unique_id, "_", record_id),  # The occurrenceID submitted to GBIF will be a combination of the study identifier and record identifier
+         basisOfRecord = "Human observation", # All rodents were trapped in either rodent traps or brought to the researchers by local hunters
+         month_start = str_split(month_trapping, "-", simplify = TRUE)[ , 1],
+         month_start = case_when(nchar(month_start) == 3 ~ match(month_start, month.abb),
+                                 nchar(month_start) > 3 ~ match(month_start, month.name),
+                                 month_start == "Nove" ~ match(str_sub(month_start, 1, 3), month.abb)), # Convert to numeric months for the starting date of collections
+         month_end = str_split(month_trapping, "-", simplify = TRUE)[ , 2],
+         month_end = case_when(nchar(month_end) == 3 ~ match(month_end, month.abb),
+                               nchar(month_end) > 3 ~ match(month_end, month.name),
+                               month_end == "Nove" ~ match(str_sub(month_end, 1, 3), month.abb)), # Convert to numeric months for the ending date of collections
+         year_start = str_split(year_trapping, "-", simplify = TRUE)[, 1],
+         year_start = case_when(is.na(year_trapping) ~ str_split(unique_id, "_", simplify = TRUE)[, 2],
+                                TRUE ~ year_start), # For studies not specifying the year of trapping the year of publication is used
+         year_end = str_split(year_trapping, "-", simplify = TRUE)[ , 2],
+         year_end = case_when(year_end == "" ~ as.character(NA),
+                              TRUE ~ year_end),
+         year_end = coalesce(year_end, year_start), # Set the year end to equal the start if only one year is noted
+         eventDate = case_when(is.na(year_trapping) ~ as.character(NA),
+                               year_start == year_end & is.na(month_start) ~ year_start,
+                               year_start != year_end & is.na(month_start) ~ paste0(year_start, "/", year_end),
+                               year_start == year_end & is.na(month_end) ~ paste0(year_start, "-", month_start),
+                               year_start == year_end & month_start == month_end ~ paste0(year_start, "-", month_start),
+                               year_start == year_end & month_start != month_end ~ paste0(year_start, "-", month_start, "/", year_end, "-", month_end),
+                               year_start != year_end ~ paste0(year_start, "-", month_start, "/", year_end, "-", month_end))) %>%
+  select(-endDayOfYear, -year, -month, -day, -verbatimEventDate) %>%
+  mutate(eventRemarks = as.character(NA)) %>%
+  left_join(., species %>%
+              rename(gbif_species = classification) %>%
+              mutate(gbif_id = as.character(gbif_id)), by = "gbif_id") %>% # Merge GBIF IDs with accepted scientific name
+  mutate(scientificName = str_to_sentence(case_when(!is.na(gbif_species) ~ gbif_species,
+                                                    !is.na(genus) ~ genus,
+                                                    TRUE ~ as.character(NA))),  # Use scientific name if available, otherwise genus association
+         specificEpithet = case_when(nchar(str_split(scientificName, " ", simplify = TRUE)[, 2]) > 1 ~ str_split(scientificName, " ", simplify = TRUE)[, 2],
+                                    TRUE ~ as.character(NA)),
+         countryCode = countrycode(country, "country.name", "iso2c")) %>%
+  select(-higherClassification, -infraspecificEpithet) %>%
+  mutate(taxonRank = case_when(!is.na(gbif_species) ~ "species",
+                               gbif_id == "1459" ~ "order",
+                               TRUE ~ "genus")) %>%
+  select(-dateIdentified,	-nomenclaturalCode, -year_trapping, -month_trapping,
+         -region, -latitude_DMS_N, -longitude_DMS_W, -latitude_D_N, -longitude_D_E, -UTM_coordinates) %>%
+  left_join(., all_rodent_coords %>%
+              mutate(lat = st_coordinates(geometry)[ ,2],
+                     lon = st_coordinates(geometry)[ ,1]), by = "occurrenceID") %>%
+  mutate(decimalLatitude = lat,
+         decimalLongitude = lon,
+         geodeticDatum = "EPSG:4326",
+         dataGeneralizations = recode(accuracy, !!!dataGeneralisations),
+         coordinateUncertaintyInMeters = case_when(accuracy == "site" ~ 1000,
+                                                   str_detect(accuracy, "regional|Niakhar") ~ 100000,
+                                                   accuracy == "national" ~ 500000),
+         genus = case_when(taxonRank == "order" ~ as.character(NA),
+                           TRUE ~ genus)) %>%
+  select(-any_of(matches("verbatimCoo|georef|higher|continent|island|state|county"))) %>%
+  mutate(locality = town_village,
+         verbatimLocality = habitat,
+         individualCount = number,
+         occurrenceStatus = case_when(individualCount >= 1 ~ "Present",
+                                      TRUE ~ "Absent")) %>%
+  left_join(., study_titles, by = "unique_id") %>%
+  mutate(identifiedBy = first_author,
+         datasetName = title,
+         bibliographicCitation = reference_uid,
+         order = case_when(scientificName == "rodentia" ~ "rodentia",
+                           TRUE ~ order),
+         phylum = "chordata",
+         kingdom = "animalia")
+
 # Add pathogen data -------------------------------
 
 # Cleaning species names
@@ -238,7 +322,10 @@ pathogen_data <- read_rds(here("data_raw", "pathogen.rds")) %>%
   mutate(country = as_factor(country),
          path_link =  paste0(unique_id, "_", row_number()))
 
+pathogen_tested <- c("path_1", "path_2", "path_3", "path_4", "path_5", "path_6")
+
 path_all <- pathogen_data %>%
+  ungroup() %>%
   dplyr::select(path_link, all_of(pathogen_tested), path_1_tested, path_2_tested, path_3_tested, path_4_tested, path_5_tested, path_6_tested,
                 pcr_path_1_positive, pcr_path_2_positive, pcr_path_3_positive, pcr_path_4_positive, pcr_path_5_positive, pcr_path_6_positive,
                 ab_ag_path_1_positive, ab_ag_path_2_positive, ab_ag_path_3_positive, ab_ag_path_4_positive, ab_ag_path_5_positive,
@@ -281,6 +368,31 @@ names(pathogen_dictionary) <- c("leishmania_major", "lassa_mammeranvirus", "toxo
                                 "mycobacterium_spp", "borrelia_spp", "schistosoma_mansoni", "plagiorchis_species", "anaplasma", "mycobacteria_spp", "lassa_mammarenavirus_IgG_Ab",
                                 "lassa_mammarenavirus_Ag")
 
+path_species <- unique(unlist(pathogen_dictionary))
+
+# Pull the hierarchy for each pathogen genus from gbif
+if(!file.exists(here("data_clean", "pathogen_genus_hierarchy.rds"))){
+  path_species[path_species == "trypanosoma lewisi"] = "Trypanosoma"
+  path_species[path_species == "babesia"] = "Aconoidasida"
+  
+  path_genera <- classification(snakecase::to_sentence_case(path_species), db = "gbif")
+  path_classification <- as_tibble(do.call(rbind,c(path_genera, make.row.names = T)), rownames = "path") %>%
+    mutate(path = str_remove_all(path, ".[1-9]")) %>%
+    pivot_wider(id_cols = path, names_from = rank, values_from = name)
+  
+  path_classification$path[path_classification$path == "Trypanosoma"] = "Trypanosoma lewisi"
+  path_classification$path[path_classification$path == "Aconoidasida"] = "Babesia"
+  
+  write_rds(path_classification %>%
+              mutate(species = case_when(nchar(str_split(path, pattern = " ", simplify = TRUE)[, 2]) > 1 ~ path,
+                                         TRUE ~ species)), here("data_clean", "pathogen_genus_hierarchy.rds"))
+
+  } else {
+  
+  path_classification <- read_rds(here("data_clean", "pathogen_genus_hierarchy.rds"))
+  
+}
+
 pathogen_prep <- long_pathogen %>%
   mutate(pathogen_name = recode(pathogen_tested, !!!pathogen_dictionary),
          group = case_when(str_detect(assay, "_1_") ~ 1,
@@ -306,106 +418,74 @@ pathogen_prep <- long_pathogen %>%
 }) %>%
   bind_rows() %>%
   filter(tested != 0) %>%
-  mutate(Organism = pathogen_name,
-         organismRemarks = paste0("Assayed using ", method, ". Number of individuals tested = ", tested, ". Number of individuals positive = ", positive),
+  group_by(path_link) %>%
+  mutate(occurrenceID = case_when(n() > 1 ~ paste0(path_link, "_path_"),
+                                  TRUE ~ paste0(path_link, "_path")),
+         path_number = row_number(),
+         occurrenceID = case_when(str_detect(occurrenceID, "_path_") ~ paste0(occurrenceID, path_number),
+                                  TRUE ~ occurrenceID)) %>%
+  ungroup() %>%
+  mutate(pathway = "parasites on animals",
+         basisOfRecord = "Material sample",
+         Organism = str_to_sentence(pathogen_name)) %>%
+  left_join(path_classification %>%
+              rename(scientificName = species), by = c("Organism" = "path")) %>%
+  mutate(taxonRank = case_when(!is.na(scientificName) ~ "species",
+                               !is.na(genus) ~ "genus",
+                               !is.na(family) ~ "family",
+                               !is.na(order) ~ "order",
+                               !is.na(class) ~ "class",
+                               !is.na(phylum) ~ "phylum",
+                               TRUE ~ kingdom),
+         specificEpithet = case_when(!is.na(scientificName) ~ scientificName,
+                                     TRUE ~ as.character(NA)),
          occurrenceStatus = case_when(positive >= 1 ~ "Present",
-                                      TRUE ~ "Absent")) %>%
-  select(path_link, Organism, organismRemarks, occurrenceStatus)
+                                       TRUE ~ "Absent"),
+         organismQuantity = positive,
+         organismQuantityType = "samples",
+         occurrenceRemarks = paste0("Number of individuals tested = ", tested),
+         identificationRemarks = paste0("Assayed using ", method))
+  
+
+pathogen_rodent_link <- pathogen_prep %>%
+  select(path_occurrenceID = occurrenceID, path_link, pathogen_name, occurrenceStatus) %>%
+  left_join(prep_df %>%
+              select(occurrenceID, path_link, scientificName), by = c("path_link")) %>%
+  mutate(associatedOccurrences = case_when(occurrenceStatus == "Present" ~ paste0("parasites collected from '", occurrenceID, "'"),
+                                           TRUE ~ as.character(NA)),
+         associatedTaxa = case_when(occurrenceStatus == "Present" ~ paste0("parasite of ", str_to_lower(scientificName)),
+                                    TRUE ~ as.character(NA))) %>%
+  distinct(occurrenceID = path_occurrenceID, associatedOccurrences, associatedTaxa)
+
+pathogen_prep_df <- pathogen_prep %>%
+  left_join(pathogen_rodent_link) %>%
+  left_join(prep_df %>%
+              select(!any_of(names(pathogen_prep)[-1])),
+            by  = "path_link") %>%
+  select(any_of(final_columns)) %>%
+  mutate(individualCount = NA)
+
+rodent_pathogen_link <- prep_df %>%
+  select(occurrenceID, path_link) %>%
+  right_join(pathogen_prep %>%
+               select(path_occurrenceID = occurrenceID, path_link, pathogen_name, method, organismQuantity)) %>%
+  filter(organismQuantity != 0) %>%
+  group_by(occurrenceID) %>%
+  mutate(associatedOccurrences = paste0("host of '", path_occurrenceID, collapse = "', '", "'"),
+         associatedTaxa = paste0("host of ", pathogen_name, collapse = ", ")) %>%
+  distinct(occurrenceID, associatedOccurrences, associatedTaxa)
+
+rodent_prep_df <- prep_df %>%
+  left_join(rodent_pathogen_link) %>%
+  select(any_of(final_columns))
 
 # Build the GBIF dataframe ------------------------------------------------
 
-final_columns <- c("occurrenceID", "basisOfRecord", "scientificName", "eventDate",
-                   "countryCode", "taxonRank", "kingdom", "phylum", "order", "family", "genus",
-                   "taxonRank", "decimalLatitude", "decimalLongitude",
-                   "geodeticDatum", "coordinateUncertaintyInMeters", "individualCount", "dataGeneralizations",
-                   "country", "locality", "verbatimLocality", "identifiedBy", "datasetName", "eventRemarks", "Organism",
-                   "organismRemarks", "occurrenceStatus")
-
-dataGeneralisations <- c("region" = "Centre of smallest associated administrative district used",
-                         "regional" = "Centre of smallest associated administrative district used",
-                         "Niakhar" = "Centre of smallest associated administrative district used",
-                         "country" = "Centroid of the country used as no finer scale geographic information available",
-                         "site" = "Coordinates reflect the location of the study site where the sample was collected")
-
-prep_df <- rodent_classifications %>%
-  bind_cols(as_tibble(matrix(nrow = nrow(rodent_classifications), ncol = length(gbif_col_names)), .name_repair = ~ gbif_col_names)) %>%
-  relocate(colnames(gbif_template)) %>%
-  mutate(occurrenceID = paste0(unique_id, "_", record_id),  # The occurrenceID submitted to GBIF will be a combination of the study identifier and record identifier
-         basisOfRecord = "LivingSpecimen", # All rodents were trapped in either rodent traps or brought to the researchers by local hunters
-         month_start = str_split(month_trapping, "-", simplify = TRUE)[ , 1],
-         month_start = case_when(nchar(month_start) == 3 ~ match(month_start, month.abb),
-                                 nchar(month_start) > 3 ~ match(month_start, month.name),
-                                 month_start == "Nove" ~ match(str_sub(month_start, 1, 3), month.abb)), # Convert to numeric months for the starting date of collections
-         month_end = str_split(month_trapping, "-", simplify = TRUE)[ , 2],
-         month_end = case_when(nchar(month_end) == 3 ~ match(month_end, month.abb),
-                                 nchar(month_end) > 3 ~ match(month_end, month.name),
-                                 month_end == "Nove" ~ match(str_sub(month_end, 1, 3), month.abb)), # Convert to numeric months for the ending date of collections
-         year_start = str_split(year_trapping, "-", simplify = TRUE)[, 1],
-         year_start = case_when(is.na(year_trapping) ~ str_split(unique_id, "_", simplify = TRUE)[, 2],
-                                TRUE ~ year_start), # For studies not specifying the year of trapping the year of publication is used
-         year_end = str_split(year_trapping, "-", simplify = TRUE)[ , 2],
-         year_end = case_when(year_end == "" ~ as.character(NA),
-                              TRUE ~ year_end),
-         year_end = coalesce(year_end, year_start), # Set the year end to equal the start if only one year is noted
-         eventDate = case_when(is.na(year_trapping) ~ year_start,
-                               year_start == year_end & is.na(month_start) ~ year_start,
-                               year_start != year_end & is.na(month_start) ~ paste0(year_start, "/", year_end),
-                               year_start == year_end & is.na(month_end) ~ paste0(year_start, "-", month_start),
-                               year_start == year_end & month_start == month_end ~ paste0(year_start, "-", month_start),
-                               year_start == year_end & month_start != month_end ~ paste0(year_start, "-", month_start, "/", year_end, "-", month_end),
-                               year_start != year_end ~ paste0(year_start, "-", month_start, "/", year_end, "-", month_end))) %>%
-  select(-endDayOfYear, -year, -month, -day, -verbatimEventDate) %>%
-  mutate(eventRemarks = case_when(is.na(year_trapping) ~ "No dates supplied in publication, year of publication used",
-                                  TRUE ~ as.character(NA))) %>%
-  left_join(., species %>%
-              rename(gbif_species = classification) %>%
-              mutate(gbif_id = as.character(gbif_id)), by = "gbif_id") %>% # Merge GBIF IDs with accepted scientific name
-  mutate(scientificName = case_when(!is.na(gbif_species) ~ gbif_species,
-                                           !is.na(genus) ~ genus,
-                                           TRUE ~ as.character(NA)),  # Use scientific name if available, otherwise genus association
-         countryCode = countrycode(country, "country.name", "iso2c")) %>%
-  select(-higherClassification, -specificEpithet, -infraspecificEpithet) %>%
-  mutate(taxonRank = case_when(!is.na(gbif_species) ~ "species",
-                               gbif_id == "1459" ~ "order",
-                               TRUE ~ "genus")) %>%
-  select(-dateIdentified,	-nomenclaturalCode, -year_trapping, -month_trapping,
-         -region, -latitude_DMS_N, -longitude_DMS_W, -latitude_D_N, -longitude_D_E, -UTM_coordinates) %>%
-  left_join(., all_rodent_coords %>%
-              mutate(lat = st_coordinates(geometry)[ ,2],
-                     lon = st_coordinates(geometry)[ ,1]), by = "occurrenceID") %>%
-  mutate(decimalLatitude = lat,
-         decimalLongitude = lon,
-         geodeticDatum = "EPSG:4326",
-         dataGeneralizations = recode(accuracy, !!!dataGeneralisations),
-         coordinateUncertaintyInMeters = case_when(accuracy == "site" ~ 1000,
-                                                   str_detect(accuracy, "regional|Niakhar") ~ 100000,
-                                                   accuracy == "national" ~ 500000),
-         genus = case_when(taxonRank == "order" ~ as.character(NA),
-                           TRUE ~ genus)) %>%
-  select(-any_of(matches("verbatimCoo|georef|higher|continent|island|state|county"))) %>%
-  mutate(locality = town_village,
-         verbatimLocality = habitat,
-         individualCount = number) %>%
-  left_join(., study_titles, by = "unique_id") %>%
-  mutate(identifiedBy = first_author,
-         datasetName = title,
-         order = case_when(scientificName == "rodentia" ~ "rodentia",
-                           TRUE ~ order),
-         phylum = "chordata",
-         kingdom = "animalia")
-
-# Add pathogen_prep to prep_df
-a <- prep_df %>%
-  left_join(pathogen_prep, by = c("path_link")) %>%
-  select(any_of(final_columns))
-
-
-test <- sample_n(a %>%
-                   drop_na(occurrenceStatus), 100)
-write_tsv(test, here("final_data", "taxa_path.txt"))
-
-final_df <- prep_df %>%
-  select(any_of(final_columns))
+# Add pathogen_prep_df to rodent_prep_df
+final_df <- bind_rows(rodent_prep_df, pathogen_prep_df) %>%
+  select(any_of(final_columns)) %>%
+  mutate(scientificName = case_when(nchar(str_split(scientificName, pattern = " ", simplify = TRUE)[, 2]) >= 1 ~ scientificName,
+                                          TRUE ~ as.character(NA)))
 
 dir.create(here("final_data"))
 write_rds(final_df, here("data_clean", "occurrence_df.rds"))

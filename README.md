@@ -1,4 +1,5 @@
 # Data for GBIF
+[![DOI](https://zenodo.org/badge/599957741.svg)](https://zenodo.org/badge/latestdoi/599957741)
 
 This repository is to clean and organise the data from a paper published on rodent trapping across [West Africa](https://github.com/DidDrog11/scoping_review).
 

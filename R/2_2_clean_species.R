@@ -5,7 +5,7 @@ rodent_data <- read_rds(here("data_raw", "rodent_data.rds")) %>%
          record_id = 1:nrow(.))
 
 study_titles = read_rds(here("data_clean", "studies.rds")) %>%
-  select(unique_id, first_author, title, reference_uid)
+  select(unique_id, first_author, title, reference_uid, rightsHolder, license)
 
 # Cleaning species names --------------------------------------------------
 
@@ -312,7 +312,8 @@ prep_df <- rodent_classifications %>%
          order = case_when(scientificName == "rodentia" ~ "rodentia",
                            TRUE ~ order),
          phylum = "chordata",
-         kingdom = "animalia")
+         kingdom = "animalia") %>%
+  rename(license = license.y)
 
 # Add pathogen data -------------------------------
 

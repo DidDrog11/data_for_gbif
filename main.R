@@ -26,5 +26,3 @@ source(here("R", "2_2_clean_species.R"))
 
 # Produce the metadata file
 source(here("R", "3_create_metadata.R"))
-
-source(here("R", "2_4_clean_pathogen.R"))

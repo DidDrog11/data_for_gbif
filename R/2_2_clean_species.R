@@ -13,17 +13,57 @@ study_titles = read_rds(here("data_clean", "studies.rds")) %>%
 citations <- bib2df(here("citations", "include_final.bib"))
 
 clean_citations <- citations %>%
-  select(BIBTEXKEY, AUTHOR, TITLE, JOURNALTITLE, YEAR, VOLUME, NUMBER, PAGES) %>%
+  distinct(TITLE, .keep_all = TRUE) %>%
+  select(BIBTEXKEY, AUTHOR, TITLE, JOURNAL, YEAR, VOLUME, NUMBER, PAGES, DOI) %>%
   group_by(BIBTEXKEY) %>%
   unnest(AUTHOR) %>%
   summarise(authors = paste(AUTHOR, collapse = ", "),
             title = unique(TITLE),
-            journal = unique(JOURNALTITLE),
+            journal = unique(JOURNAL),
             year = unique(YEAR),
             volume = unique(VOLUME),
             number = unique(NUMBER),
-            pages = unique(PAGES)) %>%
-  mutate(authors = str_remove_all(authors, "\\{|\\}"))
+            pages = unique(PAGES),
+            doi = unique(DOI)
+            ) %>%
+  mutate(authors = str_remove_all(authors, "\\{|\\}")) %>%
+  left_join(study_titles %>%
+              select(unique_id, title),
+            by = "title") %>%
+  left_join(study_titles %>%
+              select(unique_id, reference_uid),
+            by = c("doi" = "reference_uid")) %>%
+  mutate(unique_id = coalesce(unique_id.x, unique_id.y)) %>%
+  select(-unique_id.x, -unique_id.y) %>%
+  mutate(full_citation = paste0(authors, ". ", year, ", ", title, ". ", 
+                                if_else(is.na(journal), "", journal),
+                                ". ", 
+                                if_else(is.na(volume), "", volume),
+                                if_else(is.na(number), "", paste0("(", number, ")")),
+                                if_else(is.na(pages), "", paste0(" p.", pages, ". ")),
+                                if_else(is.na(doi), "", paste0("DOI/ISSN/ISBN: ", doi))))
+
+# Manually link the articles that cannot be done based on titles or doi
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "barnett_ecology_2000"] <- "ab_2000_sierraleone"
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "decher_rapid_2004"] <- "jd_2004_guinea"
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "ebenezer_effects_2012"] <- "ae_2012_nigeria"
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "granjon_small_2002"] <- "lg_2002_mauritania"
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "fichet-calvet_diversity_2009"] <- "fc_2009_guinea"
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "diallo_bacteriological_1982"] <- "ad_1982_nigeria"
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "monadjem_rapid_2005"] <- "am_2005_liberia"
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "attuquayefio_study_2003"] <- "da_2003_ghana"
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "meinig_notes_1999"] <- "hm_1999_mali"
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "mccullough_rapid_2005"] <- "jd_2005_ghana"
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "kwaku_rapid_2006"] <- "pb_2006_ghana"
+clean_citations$unique_id[clean_citations$BIBTEXKEY == "wright_rapid_2006"] <- "rn_2006_guinea"
+
+final_citations <- clean_citations %>%
+  select(unique_id, authors, full_citation) %>%
+  drop_na(unique_id) %>%
+  group_by(unique_id) %>%
+  arrange(-str_length(full_citation)) %>%
+  slice(1) %>%
+  ungroup()
 
 
 # Cleaning species names --------------------------------------------------
@@ -325,10 +365,11 @@ prep_df <- rodent_classifications %>%
          occurrenceStatus = case_when(individualCount >= 1 ~ "Present",
                                       TRUE ~ "Absent")) %>%
   left_join(., study_titles, by = "unique_id") %>%
-  mutate(identifiedBy = first_author,
+  left_join(., final_citations, by ="unique_id") %>%
+  mutate(identifiedBy = authors,
          datasetName = title,
          parentEventID = unique_id,
-         bibliographicCitation = reference_uid,
+         bibliographicCitation = full_citation,
          order = case_when(scientificName == "rodentia" ~ "rodentia",
                            TRUE ~ order),
          phylum = "chordata",

@@ -7,6 +7,25 @@ rodent_data <- read_rds(here("data_raw", "rodent_data.rds")) %>%
 study_titles = read_rds(here("data_clean", "studies.rds")) %>%
   select(unique_id, first_author, title, reference_uid, rightsHolder, license)
 
+
+# Clean citations ---------------------------------------------------------
+
+citations <- bib2df(here("citations", "include_final.bib"))
+
+clean_citations <- citations %>%
+  select(BIBTEXKEY, AUTHOR, TITLE, JOURNALTITLE, YEAR, VOLUME, NUMBER, PAGES) %>%
+  group_by(BIBTEXKEY) %>%
+  unnest(AUTHOR) %>%
+  summarise(authors = paste(AUTHOR, collapse = ", "),
+            title = unique(TITLE),
+            journal = unique(JOURNALTITLE),
+            year = unique(YEAR),
+            volume = unique(VOLUME),
+            number = unique(NUMBER),
+            pages = unique(PAGES)) %>%
+  mutate(authors = str_remove_all(authors, "\\{|\\}"))
+
+
 # Cleaning species names --------------------------------------------------
 
 genus_synonym <-  as.list(c("praomys", "mus"))
@@ -235,7 +254,7 @@ final_columns <- c("occurrenceID", "associatedOccurrences", "associatedTaxa", "p
                    "countryCode", "taxonRank", "kingdom", "phylum", "class", "order", "family", "genus", "specificEpithet", "decimalLatitude", "decimalLongitude",
                    "geodeticDatum", "coordinateUncertaintyInMeters", "occurrenceStatus", "individualCount", "organismQuantity", "organismQuantityType",
                    "occurrenceRemarks", "dataGeneralizations", "country", "locality", "verbatimLocality", "identificationRemarks", "identifiedBy",
-                   "datasetName", "bibliographicCitation", "rightsHolder", "license", "eventRemarks")
+                   "datasetName", "parentEventID", "bibliographicCitation", "rightsHolder", "license", "eventRemarks")
 
 dataGeneralisations <- c("region" = "Centre of smallest associated administrative district used",
                          "regional" = "Centre of smallest associated administrative district used",
@@ -308,6 +327,7 @@ prep_df <- rodent_classifications %>%
   left_join(., study_titles, by = "unique_id") %>%
   mutate(identifiedBy = first_author,
          datasetName = title,
+         parentEventID = unique_id,
          bibliographicCitation = reference_uid,
          order = case_when(scientificName == "rodentia" ~ "rodentia",
                            TRUE ~ order),
@@ -472,7 +492,7 @@ rodent_pathogen_link <- prep_df %>%
                select(path_occurrenceID = occurrenceID, path_link, pathogen_name, method, organismQuantity)) %>%
   filter(organismQuantity != 0) %>%
   group_by(occurrenceID) %>%
-  mutate(associatedOccurrences = paste0("host of '", path_occurrenceID, collapse = "', '", "'"),
+  mutate(associatedOccurrences = paste0("host of '", path_occurrenceID, collapse = "', ", "'"),
          associatedTaxa = paste0("host of ", pathogen_name, collapse = ", ")) %>%
   distinct(occurrenceID, associatedOccurrences, associatedTaxa)
 

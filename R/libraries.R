@@ -12,6 +12,7 @@ pkgs =
     "sf",
     "rosm",
     "lubridate",
+    "parzer",
     "taxize",
     "xtable"
     )

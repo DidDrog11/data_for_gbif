@@ -294,7 +294,7 @@ final_columns <- c("occurrenceID", "associatedOccurrences", "associatedTaxa", "p
                    "countryCode", "taxonRank", "kingdom", "phylum", "class", "order", "family", "genus", "specificEpithet", "decimalLatitude", "decimalLongitude",
                    "geodeticDatum", "coordinateUncertaintyInMeters", "occurrenceStatus", "individualCount", "organismQuantity", "organismQuantityType",
                    "occurrenceRemarks", "dataGeneralizations", "country", "locality", "verbatimLocality", "identificationRemarks", "identifiedBy",
-                   "datasetName", "parentEventID", "bibliographicCitation", "rightsHolder", "license", "eventRemarks")
+                   "datasetName", "eventID", "parentEventID", "bibliographicCitation", "rightsHolder", "license", "accessRights", "eventRemarks")
 
 dataGeneralisations <- c("region" = "Centre of smallest associated administrative district used",
                          "regional" = "Centre of smallest associated administrative district used",
@@ -369,12 +369,19 @@ prep_df <- rodent_classifications %>%
   mutate(identifiedBy = authors,
          datasetName = title,
          parentEventID = unique_id,
+         eventID = paste0(parentEventID, "_", if_else(is.na(eventDate), "", paste0(eventDate, "_")), locality),
          bibliographicCitation = full_citation,
          order = case_when(scientificName == "rodentia" ~ "rodentia",
                            TRUE ~ order),
          phylum = "chordata",
          kingdom = "animalia") %>%
-  rename(license = license.y)
+  rename(license = license.y) %>%
+  mutate(accessRights = case_when(str_detect(license, "all|distribution") ~ license,
+                                  TRUE ~ NA),
+         license = case_when(str_detect(license, "CC") ~ license,
+                             TRUE ~ NA),
+         rightsHolder = case_when(str_detect(rightsHolder, "authors") ~ authors,
+                                  TRUE ~ rightsHolder))
 
 # Add pathogen data -------------------------------
 

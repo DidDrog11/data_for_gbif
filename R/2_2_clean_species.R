@@ -443,6 +443,7 @@ path_species <- unique(unlist(pathogen_dictionary))
 if(!file.exists(here("data_clean", "pathogen_genus_hierarchy.rds"))){
   path_species[path_species == "trypanosoma lewisi"] = "Trypanosoma"
   path_species[path_species == "babesia"] = "Aconoidasida"
+  path_species[path_species == "orentia"] = "Orientia"
   
   path_genera <- classification(snakecase::to_sentence_case(path_species), db = "gbif")
   path_classification <- as_tibble(do.call(rbind,c(path_genera, make.row.names = T)), rownames = "path") %>%
@@ -554,7 +555,9 @@ rodent_prep_df <- prep_df %>%
 final_df <- bind_rows(rodent_prep_df, pathogen_prep_df) %>%
   select(any_of(final_columns)) %>%
   mutate(scientificName = case_when(nchar(str_split(scientificName, pattern = " ", simplify = TRUE)[, 2]) >= 1 ~ scientificName,
-                                          TRUE ~ as.character(NA)))
+                                          TRUE ~ as.character(NA)),
+         kingdom = str_to_sentence(kingdom),
+         phylum = str_to_sentence(phylum))
 
 dir.create(here("final_data"))
 write_rds(final_df, here("data_clean", "occurrence_df.rds"))

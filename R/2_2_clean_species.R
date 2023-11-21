@@ -349,8 +349,8 @@ prep_df <- rodent_classifications %>%
   left_join(., all_rodent_coords %>%
               mutate(lat = st_coordinates(geometry)[ ,2],
                      lon = st_coordinates(geometry)[ ,1]), by = "occurrenceID") %>%
-  mutate(decimalLatitude = lat,
-         decimalLongitude = lon,
+  mutate(decimalLatitude = round(lat, digits = 6),
+         decimalLongitude = round(lon, digits = 6),
          geodeticDatum = "EPSG:4326",
          dataGeneralizations = recode(accuracy, !!!dataGeneralisations),
          coordinateUncertaintyInMeters = case_when(accuracy == "site" ~ 1000,
@@ -463,6 +463,8 @@ if(!file.exists(here("data_clean", "pathogen_genus_hierarchy.rds"))){
   
 }
 
+long_pathogen$pathogen_tested[long_pathogen$pathogen_tested == "orentia"] = "orientia"
+
 pathogen_prep <- long_pathogen %>%
   mutate(pathogen_name = recode(pathogen_tested, !!!pathogen_dictionary),
          group = case_when(str_detect(assay, "_1_") ~ 1,
@@ -557,8 +559,13 @@ final_df <- bind_rows(rodent_prep_df, pathogen_prep_df) %>%
   mutate(scientificName = case_when(nchar(str_split(scientificName, pattern = " ", simplify = TRUE)[, 2]) >= 1 ~ scientificName,
                                           TRUE ~ as.character(NA)),
          kingdom = str_to_sentence(kingdom),
-         phylum = str_to_sentence(phylum))
+         phylum = str_to_sentence(phylum),
+         license = "CC-BY-NC 4.0",
+         rightsHolder = NA,
+         accessRights = NA)
 
 dir.create(here("final_data"))
 write_rds(final_df, here("data_clean", "occurrence_df.rds"))
 write_tsv(final_df, here("final_data", "taxa.txt"))
+
+zip(zipfile = here("final_data", "final_data"), files = c(here("final_data", "taxa.txt"), here("final_data", "eml.xml")))

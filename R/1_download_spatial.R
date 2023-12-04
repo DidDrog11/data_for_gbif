@@ -1,3 +1,5 @@
+# Download the Administrative level 2 shapefiles from GADM
+
 source(here::here("R", "libraries.R"))
 
 if(!file.exists(here("data_download", "admin_spatial", "level_2_admin.rds"))) {

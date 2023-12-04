@@ -1,3 +1,4 @@
+# Script to clean the species and pathogen data
 source(here::here("R", "libraries.R"))
 
 rodent_data <- read_rds(here("data_raw", "rodent_data.rds")) %>%
@@ -9,7 +10,7 @@ study_titles = read_rds(here("data_clean", "studies.rds")) %>%
 
 
 # Clean citations ---------------------------------------------------------
-
+# Process the citations to allow for linking to the original publication
 citations <- bib2df(here("citations", "include_final.bib"))
 
 clean_citations <- citations %>%
@@ -57,6 +58,7 @@ clean_citations$unique_id[clean_citations$BIBTEXKEY == "mccullough_rapid_2005"] 
 clean_citations$unique_id[clean_citations$BIBTEXKEY == "kwaku_rapid_2006"] <- "pb_2006_ghana"
 clean_citations$unique_id[clean_citations$BIBTEXKEY == "wright_rapid_2006"] <- "rn_2006_guinea"
 
+# Cleaned citations for inclusion
 final_citations <- clean_citations %>%
   select(unique_id, authors, full_citation) %>%
   drop_na(unique_id) %>%
@@ -302,6 +304,7 @@ dataGeneralisations <- c("region" = "Centre of smallest associated administrativ
                          "country" = "Centroid of the country used as no finer scale geographic information available",
                          "site" = "Coordinates reflect the location of the study site where the sample was collected")
 
+# Final cleaning of dataset
 prep_df <- rodent_classifications %>%
   bind_cols(as_tibble(matrix(nrow = nrow(rodent_classifications), ncol = length(gbif_col_names)), .name_repair = ~ gbif_col_names)) %>%
   relocate(colnames(gbif_template)) %>%
